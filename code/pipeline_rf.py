@@ -672,7 +672,10 @@ class RectifiedFlowPipeline(DiffusionPipeline, TextualInversionLoaderMixin, Lora
                 if do_classifier_free_guidance:
                     v_pred_neg, v_pred_text = v_pred.chunk(2)
                     v_pred = v_pred_neg + guidance_scale * (v_pred_text - v_pred_neg)
-
+                if i <= len(timesteps) - 1:
+                    dt = timesteps[i] - timesteps[i + 1]
+                else:
+                    dt = timesteps[i]
                 latents = latents + dt * v_pred 
 
                 # call the callback, if provided

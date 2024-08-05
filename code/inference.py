@@ -6,6 +6,7 @@ from tqdm import tqdm
 
 
 def main(args):
+    os.makedirs(args.image_dir, exist_ok=True)
     pipe = RectifiedFlowPipeline.from_pretrained("XCLIU/2_rectified_flow_from_sd_1_5", torch_dtype=torch.float16) 
     ### switch to torch.float32 for higher quality
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -15,7 +16,7 @@ def main(args):
     prompts = [line.strip("\n") for line in open(args.caption_file)][:args.num_prompts]
 
     count = 0
-    for i in range(0, len(prompts), args.batch_size):
+    for i in tqdm(range(0, len(prompts), args.batch_size)):
         prompt_batch = prompts[i : i + args.batch_size]
         images = pipe(prompt=prompt_batch, 
                 negative_prompt="painting, unreal, twisted", 
