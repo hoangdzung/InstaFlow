@@ -15,12 +15,16 @@ def main(args):
 
     prompts = [line.strip("\n") for line in open(args.caption_file)][:args.num_prompts]
 
+    timesteps = [float(i) * 1000 for i in args.timesteps]
+    if len(timesteps) == 0:
+        timesteps = [(1. - i/args.steps) * 1000. for i in range(args.steps)]
+
     count = 0
     for i in tqdm(range(0, len(prompts), args.batch_size)):
         prompt_batch = prompts[i : i + args.batch_size]
         images = pipe(prompt=prompt_batch, 
-                negative_prompt="painting, unreal, twisted", 
-                guidance_scale=1.5).images 
+                guidance_scale=1.5,
+                timesteps=timesteps).images 
         for i, image in enumerate(images):
             image.save(os.path.join(args.image_dir, f"{count + i:06d}.png"))
         count += len(prompt_batch)
@@ -32,6 +36,9 @@ if __name__ == "__main__":
     parser.add_argument('--caption_file', type=str)
     parser.add_argument('--batch_size', type=int, default=50)
     parser.add_argument('--num_prompts', type=int, default=10000)
+    parser.add_argument('--timesteps', nargs='+')
+    parser.add_argument('--steps', type=int)
+
     args = parser.parse_args()
 
     main(args)

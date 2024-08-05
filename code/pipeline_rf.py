@@ -635,11 +635,13 @@ class RectifiedFlowPipeline(DiffusionPipeline, TextualInversionLoaderMixin, Lora
         if do_classifier_free_guidance:
             prompt_embeds = torch.cat([negative_prompt_embeds, prompt_embeds])
 
+        is_ld3 = False
         # 4. Prepare timesteps
         if timesteps is None:
             timesteps = [(1. - i/num_inference_steps) * 1000. for i in range(num_inference_steps)]
         else:
             num_inference_steps = len(timesteps)
+            is_ld3 = True
 
         # 5. Prepare latent variables
         num_channels_latents = self.unet.config.in_channels
@@ -672,10 +674,11 @@ class RectifiedFlowPipeline(DiffusionPipeline, TextualInversionLoaderMixin, Lora
                 if do_classifier_free_guidance:
                     v_pred_neg, v_pred_text = v_pred.chunk(2)
                     v_pred = v_pred_neg + guidance_scale * (v_pred_text - v_pred_neg)
-                if i <= len(timesteps) - 1:
-                    dt = timesteps[i] - timesteps[i + 1]
-                else:
-                    dt = timesteps[i]
+                if is_ld3:
+                    if i <= len(timesteps) - 2:
+                        dt = timesteps[i] - timesteps[i + 1]
+                    else:
+                        dt = timesteps[i]
                 latents = latents + dt * v_pred 
 
                 # call the callback, if provided
